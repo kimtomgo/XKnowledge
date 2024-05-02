@@ -26,8 +26,6 @@ class XKIndex(View):
 class IndexBlueprint:
     @staticmethod
     def creator_blueprint():
-        blueprint = Blueprint(
-            "/", __name__, url_prefix="/", template_folder="templates"
-        )
+        blueprint = Blueprint("/", __name__, url_prefix="/")
         blueprint.add_url_rule("/", view_func=XKIndex.as_view("/"))
         return blueprint
