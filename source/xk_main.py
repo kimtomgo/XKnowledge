@@ -4,7 +4,7 @@ from source.front.xk_index import IndexBlueprint
 
 if __name__ == "__main__":
     """软件入口"""
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder="front/static", template_folder="front/templates")
 
     app.register_blueprint(IndexBlueprint.creator_blueprint())  # 在app中注册蓝图
 
