@@ -46,7 +46,7 @@ class XKMainViewAPI(MethodView):
             data_manager.add_node(new_node)
             print(new_node)
 
-            if len(data_manager.highlight_node) == 0:
+            if len(data_manager.highlight_node) == 1:
                 new_link = {
                     "source": data_manager.highlight_node[0],
                     "target": new_node["name"],
