@@ -33,15 +33,26 @@
 <body>
 <div style="height:100vh;margin:auto 0">
     <button id="buttonCreateNode" type="button">创建节点</button>
+    <button id="buttonCreateEdge" type="button">创建边</button>
 
     <div id="dialogCreateNode" style="display: none;">
         <form id="createNodeFieldForm" method="post">
-            <label for="nameField">节点名称:</label>
+            <label for="nameField">名称:</label>
             <input type="text" id="nameField">
-            <label for="describeField">节点描述:</label>
+            <label for="describeField">描述:</label>
             <input type="text" id="describeField">
-            <label for="categoryField">节点所属类目:</label>
+            <label for="categoryField">所属类目:</label>
             <input type="text" id="categoryField">
+            <button type="submit">创建</button>
+        </form>
+    </div>
+
+    <div id="dialogCreateEdge" style="display: none;">
+        <form id="createEdgeFieldForm" method="post">
+            <label for="nameField">名称:</label>
+            <input type="text" id="nameField">
+            <label for="describeField">描述:</label>
+            <input type="text" id="describeField">
             <button type="submit">创建</button>
         </form>
     </div>
@@ -146,46 +157,67 @@
         myChart.hideLoading();// 隐藏加载等待
         myChart.setOption(option);
 
-        const buttonCreateNode = document.getElementById("buttonCreateNode");
         const dialogCreateNode = document.getElementById("dialogCreateNode");
+        const dialogCreateEdge = document.getElementById("dialogCreateEdge");
+
         let highlightNodeList = []; // 记录旧的高亮节点
+        let highlightEdge;
 
         myChart.on("click", function (event) {
-            // console.log(event.name);
-            const pos = highlightNodeList.indexOf(event.name);
-            if (pos !== -1 && highlightNodeList.length !== 0) {
-                if (highlightNodeList.length === 1) {
-                    downplay(highlightNodeList[0]);
-                    highlightNodeList = [];
+            console.log(event);
+            if (event.dataType === "node") {
+                const pos = highlightNodeList.indexOf(event.name);
+                if (pos !== -1 && highlightNodeList.length !== 0) {
+                    if (highlightNodeList.length === 1) {
+                        downplay(highlightNodeList[0]);
+                        highlightNodeList = [];
+                    } else {
+                        downplay(highlightNodeList[pos]);
+                        highlightNodeList = [highlightNodeList[(pos + 1) % 2]];// 取pos对应的另一个节点
+                    }
                 } else {
-                    downplay(highlightNodeList[pos]);
-                    highlightNodeList = [highlightNodeList[(pos + 1) % 2]];// 取pos对应的另一个节点
-                }
-            } else {
-                if (highlightNodeList.length < 2) {
-                    // 点击第一个节点时，高亮点击的那个节点，点击第二个节点时，高亮新点击的节点
-                    highlightNodeList[highlightNodeList.length] = event.name;
-                    highlight(event.name);
-                } else {
-                    // 点击第三个节点时，将第一个节点高亮取消，并把第二个节点放到第一个位置上，为了后面的有向链接做准备
-                    downplay(highlightNodeList[0]);
-                    highlight(event.name);
-                    highlightNodeList[0] = highlightNodeList[1];
-                    highlightNodeList[1] = event.name;
-                }
-                console.log(highlightNodeList);
-            }
+                    if (highlightNodeList.length < 2) {
+                        // 点击第一个节点时，高亮点击的那个节点，点击第二个节点时，高亮新点击的节点
+                        highlightNodeList[highlightNodeList.length] = event.name;
+                        highlight(event.name);
+                    } else {
+                        // 点击第三个节点时，将第一个节点高亮取消，并把第二个节点放到第一个位置上，为了后面的有向链接做准备
+                        downplay(highlightNodeList[0]);
+                        highlight(event.name);
+                        highlightNodeList[0] = highlightNodeList[1];
+                        highlightNodeList[1] = event.name;
 
-            const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-            formData.append("highlightNode", JSON.stringify(highlightNodeList));
-            sendData(formData, event);
+                    }
+                    console.log(highlightNodeList);
+                }
+                const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+                formData.append("highlightNode", JSON.stringify(highlightNodeList));
+                sendData(formData, event);
 
-            if (highlightNodeList.length === 2) {
-                dialogCreateNode.style.display = "none";
+                if (highlightNodeList.length === 2) {
+                    dialogCreateNode.style.display = "none";
+                }
+            } else if (event.dataType === "edge") {
+                // todo 点击边的时候做什么操作
+                highlightEdge = event.name;
+                highlight(highlightEdge);
             }
         });
 
-        buttonCreateNode.addEventListener("click", function (event) {
+        myChart.getZr().on("click", function (event) {
+            // 没有 target 意味着鼠标/指针不在任何一个图形元素上，它是从“空白处”触发的。
+            if (!event.target) {
+                console.log(highlightNodeList.length);
+                // 点击在了空白处，解除高亮
+                for (let i = 0; i < highlightNodeList.length; i++) {
+                    downplay(highlightNodeList[i]);
+                }
+                highlightNodeList = [];
+                highlightEdge = undefined;
+            }
+        });
+
+        document.getElementById("buttonCreateNode").addEventListener("click", function (event) {
             if (highlightNodeList.length === 2) {
                 for (let i = 0; i < highlightNodeList.length; i++) {
                     downplay(highlightNodeList[i]);
@@ -202,33 +234,47 @@
         });
 
         document.getElementById("createNodeFieldForm").addEventListener("submit", function (event) {
-            const name = document.getElementById("nameField");
-            const describe = document.getElementById("describeField");
-            const category = document.getElementById("categoryField");
+            // 获取表单内的所有控件
+            // event.preventDefault()
             dialogCreateNode.style.display = "none"; // 当表单提交时，关闭弹窗
 
-            const newNodeData = {
-                name: name.value,
-                des: describe.value,
-                symbolSize: 50,
-                category: category.value
-            };
-
             const formData = new FormData();
-            formData.append("createNode", JSON.stringify(newNodeData));
+            formData.append("createNode", JSON.stringify({
+                name: this.elements['nameField'].value,
+                des: this.elements['describeField'].value,
+                symbolSize: 50,
+                category: this.elements['categoryField'].value
+            }));
             sendData(formData, event);
         });
 
-        myChart.getZr().on("click", function (event) {
-            // 没有 target 意味着鼠标/指针不在任何一个图形元素上，它是从“空白处”触发的。
-            if (!event.target) {
-                console.log(highlightNodeList.length);
-                // 点击在了空白处，解除高亮
+        document.getElementById("buttonCreateEdge").addEventListener("click", function (event) {
+            if (highlightNodeList.length === 2) {
+                dialogCreateEdge.style.display = "block";
+            } else {
                 for (let i = 0; i < highlightNodeList.length; i++) {
                     downplay(highlightNodeList[i]);
                 }
                 highlightNodeList = [];
+                dialogCreateEdge.style.display = "none";
+                const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+                formData.append("highlightNode", JSON.stringify(highlightNodeList));
+                sendData(formData, event);
+                alert("增加连接时需要同时选择两个节点");
             }
+        });
+
+        document.getElementById("createEdgeFieldForm").addEventListener("submit", function (event) {
+            // 获取表单内的所有控件
+            // event.preventDefault()
+            dialogCreateEdge.style.display = "none"; // 当表单提交时，关闭弹窗
+
+            const formData = new FormData();
+            formData.append("createEdge", JSON.stringify({
+                name: this.elements['nameField'].value,
+                des: this.elements['describeField'].value
+            }));
+            sendData(formData, event);
         });
     </script>
 </div>

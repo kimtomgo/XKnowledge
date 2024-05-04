@@ -24,16 +24,11 @@ class XKMainViewAPI(MethodView):
 
     def get(self):
         data_manager.package()
-        return render_template("index.html", json_data=data_manager.get_json())
+        return render_template("xk_mainview.html", json_data=data_manager.get_json())
 
     def post(self):
         form = request.form
         loads_json = JsonFileHandler.loads_json
-        # form = MainForm(request.form)
-        # print(form.id.data)
-        # print(form.node_list_length.data)
-        # print(form.node_list.data)
-        # print(url_for("/.XKMainView"))
         node_list = form.get('highlightNode')
         if node_list is not None:
             data_manager.highlight_node = loads_json(node_list)
@@ -44,9 +39,7 @@ class XKMainViewAPI(MethodView):
             new_node = loads_json(create_node)
             new_node["symbolSize"] = 50
             data_manager.add_node(new_node)
-            print(new_node)
-
-            if len(data_manager.highlight_node) == 0:
+            if len(data_manager.highlight_node) == 1:
                 new_link = {
                     "source": data_manager.highlight_node[0],
                     "target": new_node["name"],
@@ -54,10 +47,15 @@ class XKMainViewAPI(MethodView):
                     "des": "link05des"
                 }
                 data_manager.add_link(new_link)
-                print(new_link)
+            # data_manager.save_json()
 
-            print(data_manager.get_json())
-            data_manager.save_json()
+        create_link = form.get('createEdge')
+        if create_link is not None:
+            new_link = loads_json(create_link)
+            new_link["source"] = data_manager.highlight_node[0]
+            new_link["target"] = data_manager.highlight_node[1]
+            data_manager.add_link(new_link)
+
         return redirect(url_for("/.XKMainView"))
 
 
