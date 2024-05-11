@@ -34,3 +34,21 @@ class XKDataManager:
 
     def add_link(self, new_link):
         self.json_data["links"].append(new_link)
+
+    def del_node(self, name):
+        # 为什么一定要用pos和下标进行删除，而不是直接遍历json_data["data"]和json_data["links"]？
+        # 因为在遍历的时候修改遍历数组是python的大忌
+        # 为什么放心name一定在json_data中，因为前端必须选中再删除，这样节点名称一定就在json数据中
+        pos = 0
+        while self.json_data["data"][pos]["name"] != name:
+            pos += 1
+        del self.json_data["data"][pos]
+
+        pos = 0
+        length = len(self.json_data["links"])
+        while pos < length:
+            if self.json_data["links"][pos]["source"] == name or self.json_data["links"][pos]["target"] == name:
+                del self.json_data["links"][pos]
+                pos -= 1
+                length -= 1
+            pos += 1
