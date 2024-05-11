@@ -43,11 +43,10 @@ class XKMainViewAPI(MethodView):
                 new_link = {
                     "source": data_manager.highlight_node[0],
                     "target": new_node["name"],
-                    "name": "link04",
-                    "des": "link05des"
+                    "name": ""
                 }
                 data_manager.add_link(new_link)
-            # data_manager.save_json()
+            data_manager.save_json()
 
         create_link = form.get('createEdge')
         if create_link is not None:

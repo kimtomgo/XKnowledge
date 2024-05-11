@@ -7,6 +7,7 @@
     <script src="static/jquery.js"></script>
     <script>
         function highlight(name) {
+            // 高亮节点
             myChart.dispatchAction({
                 type: "highlight",
                 seriesIndex: 0,
@@ -15,6 +16,7 @@
         }
 
         function downplay(name) {
+            // 解除节点高亮
             myChart.dispatchAction({
                 type: "downplay",
                 seriesIndex: 0,
@@ -22,7 +24,15 @@
             });
         }
 
-        function sendData(formData, event) {
+        function downplayAll(highlightNodeList) {
+            // 解除全部节点的高亮
+            for (let i = 0; i < highlightNodeList.length; i++) {
+                downplay(highlightNodeList[i]);
+            }
+        }
+
+        function sendData(formData) {
+            // 发送数据到后端
             fetch("{{ url_for("/.XKMainView") }}", {
                 method: "POST",
                 body: formData // 将FormData对象作为请求体发送
@@ -62,6 +72,9 @@
         const myChart = echarts.init(document.getElementById("main"));
         myChart.showLoading(); // 加载等待
         let jsonData = {{ json_data | tojson }};
+        let nodeNames = jsonData.data.map(function (node) {
+            return node.name;
+        }) // 记录所有的节点名称，当增加节点的时候判断是否重名
         option = {
             // 图的标题
             title: {
@@ -168,6 +181,7 @@
             if (event.dataType === "node") {
                 const pos = highlightNodeList.indexOf(event.name);
                 if (pos !== -1 && highlightNodeList.length !== 0) {
+                    // 当重复点击节点的时候，将节点高亮去掉，并且更新highlightNodeList
                     if (highlightNodeList.length === 1) {
                         downplay(highlightNodeList[0]);
                         highlightNodeList = [];
@@ -190,12 +204,10 @@
                     }
                     console.log(highlightNodeList);
                 }
-                const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-                formData.append("highlightNode", JSON.stringify(highlightNodeList));
-                sendData(formData, event);
-
-                if (highlightNodeList.length === 2) {
+                if (highlightNodeList.length === 2 && dialogCreateNode.style.display === "block") {
+                    // 当前已经打开了增加节点的输入框，将输入框关闭
                     dialogCreateNode.style.display = "none";
+                    alert("增加节点时不能同时选择两个节点");
                 }
             } else if (event.dataType === "edge") {
                 // todo 点击边的时候做什么操作
@@ -208,10 +220,8 @@
             // 没有 target 意味着鼠标/指针不在任何一个图形元素上，它是从“空白处”触发的。
             if (!event.target) {
                 console.log(highlightNodeList.length);
-                // 点击在了空白处，解除高亮
-                for (let i = 0; i < highlightNodeList.length; i++) {
-                    downplay(highlightNodeList[i]);
-                }
+                // 点击在了空白处，解除所有节点的高亮
+                downplayAll(highlightNodeList);
                 highlightNodeList = [];
                 highlightEdge = undefined;
             }
@@ -219,14 +229,10 @@
 
         document.getElementById("buttonCreateNode").addEventListener("click", function (event) {
             if (highlightNodeList.length === 2) {
-                for (let i = 0; i < highlightNodeList.length; i++) {
-                    downplay(highlightNodeList[i]);
-                }
+                // 点击创建节点的时候，发现高亮了两个节点，就将全部高亮节点取消
+                downplayAll(highlightNodeList);
                 highlightNodeList = [];
                 dialogCreateNode.style.display = "none";
-                const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-                formData.append("highlightNode", JSON.stringify(highlightNodeList));
-                sendData(formData, event);
                 alert("增加节点时不能同时选择两个节点");
             } else {
                 dialogCreateNode.style.display = "block";
@@ -237,29 +243,40 @@
             // 获取表单内的所有控件
             // event.preventDefault()
             dialogCreateNode.style.display = "none"; // 当表单提交时，关闭弹窗
-
-            const formData = new FormData();
-            formData.append("createNode", JSON.stringify({
-                name: this.elements['nameField'].value,
-                des: this.elements['describeField'].value,
-                symbolSize: 50,
-                category: this.elements['categoryField'].value
-            }));
-            sendData(formData, event);
+            if (highlightNodeList.length === 2) {
+                // 点击创建节点的时候，发现高亮了两个节点，就将全部高亮节点取消
+                downplayAll(highlightNodeList);
+                highlightNodeList = [];
+                alert("增加节点时不能同时选择两个节点");
+            } else {
+                // 创建节点的时候先检测所有的节点名称，是否重名
+                if (nodeNames.indexOf(this.elements['nameField'].value) !== -1) {
+                    alert("不能创建同名节点，请修改节点名称");
+                } else {
+                    // 不重名的情况下发送数据到后端
+                    const formData = new FormData();
+                    formData.append("highlightNode", JSON.stringify(highlightNodeList));
+                    formData.append("createNode", JSON.stringify({
+                        name: this.elements['nameField'].value,
+                        des: this.elements['describeField'].value,
+                        symbolSize: 50,
+                        category: this.elements['categoryField'].value
+                    }));
+                    sendData(formData);
+                }
+            }
         });
 
         document.getElementById("buttonCreateEdge").addEventListener("click", function (event) {
             if (highlightNodeList.length === 2) {
                 dialogCreateEdge.style.display = "block";
             } else {
-                for (let i = 0; i < highlightNodeList.length; i++) {
-                    downplay(highlightNodeList[i]);
-                }
+                downplayAll(highlightNodeList);
                 highlightNodeList = [];
                 dialogCreateEdge.style.display = "none";
                 const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
                 formData.append("highlightNode", JSON.stringify(highlightNodeList));
-                sendData(formData, event);
+                sendData(formData);
                 alert("增加连接时需要同时选择两个节点");
             }
         });
@@ -274,7 +291,7 @@
                 name: this.elements['nameField'].value,
                 des: this.elements['describeField'].value
             }));
-            sendData(formData, event);
+            sendData(formData);
         });
     </script>
 </div>
