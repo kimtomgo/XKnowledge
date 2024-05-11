@@ -42,11 +42,13 @@
 </head>
 <body>
 <div style="height:100vh;margin:auto 0">
-    <button id="saveData" type="button">保存</button>
-    <button id="reloadData" type="button">取消保存</button>
+    <button id="buttonSaveData" type="button">保存</button>
+    <button id="buttonReloadData" type="button">取消保存</button>
     <button id="buttonCreateNode" type="button">创建节点</button>
     <button id="buttonCreateEdge" type="button">创建边</button>
     <button id="buttonDeleteNode" type="button">删除节点</button>
+    <button id="buttonUndo" type="button">撤销</button>
+    <button id="buttonRedo" type="button">重做</button>
 
     <div id="dialogCreateNode" style="display: none;">
         <form id="createNodeFieldForm" method="post">
@@ -240,13 +242,13 @@
             }
         });
 
-        document.getElementById("saveData").addEventListener("click", function (event) {
+        document.getElementById("buttonSaveData").addEventListener("click", function (event) {
             const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
             formData.append("saveData", 1);
             sendData(formData);
         });
 
-        document.getElementById("reloadData").addEventListener("click", function (event) {
+        document.getElementById("buttonReloadData").addEventListener("click", function (event) {
             const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
             formData.append("reloadData", 1);
             sendData(formData);
@@ -326,6 +328,20 @@
             formData.append("deleteNode", 1);
             sendData(formData);
             highlightNodeList = [];
+            window.location.reload()
+        });
+
+        document.getElementById("buttonUndo").addEventListener("click", function (event) {
+            const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+            formData.append("undo", 1);
+            sendData(formData);
+            window.location.reload()
+        });
+
+        document.getElementById("buttonRedo").addEventListener("click", function (event) {
+            const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+            formData.append("redo", 1);
+            sendData(formData);
             window.location.reload()
         });
     </script>
