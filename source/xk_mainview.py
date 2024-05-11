@@ -48,14 +48,12 @@ class XKMainViewAPI(MethodView):
         if create_node is not None:
             new_node = loads_json(create_node)
             new_node["symbolSize"] = 50
-            data_manager.add_node(new_node)
-            if len(data_manager.highlight_node) == 1:
-                new_link = {
-                    "source": data_manager.highlight_node[0],
-                    "target": new_node["name"],
-                    "name": ""
-                }
-                data_manager.add_link(new_link)
+            new_link = None if len(data_manager.highlight_node) != 1 else {
+                "source": data_manager.highlight_node[0],
+                "target": new_node["name"],
+                "name": ""
+            }
+            data_manager.add_node(new_node, new_link)
 
         create_link = form.get('createEdge')
         if create_link is not None:
@@ -67,7 +65,15 @@ class XKMainViewAPI(MethodView):
         delete_node_list = form.get('deleteNode')
         if delete_node_list is not None:
             for node_name in data_manager.highlight_node:
-                data_manager.del_node(node_name)
+                data_manager.delete_node(node_name)
+
+        undo = form.get('undo')
+        if undo is not None:
+            data_manager.undo()
+
+        redo = form.get('redo')
+        if redo is not None:
+            data_manager.redo()
 
         return redirect(url_for("/.XKMainView"))
 
