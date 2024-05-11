@@ -42,6 +42,8 @@
 </head>
 <body>
 <div style="height:100vh;margin:auto 0">
+    <button id="saveData" type="button">保存</button>
+    <button id="reloadData" type="button">取消保存</button>
     <button id="buttonCreateNode" type="button">创建节点</button>
     <button id="buttonCreateEdge" type="button">创建边</button>
     <button id="buttonDeleteNode" type="button">删除节点</button>
@@ -129,7 +131,7 @@
                     repulsion: 2500,
                     edgeLength: [10, 50]
                 },
-                //draggable: true, // 元素是否可以被拖动
+                draggable: true, // 元素是否可以被拖动
                 // 边的风格
                 lineStyle: {
                     normal: {
@@ -236,6 +238,19 @@
                     alert("增加边时要同时选择两个节点");
                 }
             }
+        });
+
+        document.getElementById("saveData").addEventListener("click", function (event) {
+            const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+            formData.append("saveData", 1);
+            sendData(formData);
+        });
+
+        document.getElementById("reloadData").addEventListener("click", function (event) {
+            const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+            formData.append("reloadData", 1);
+            sendData(formData);
+            window.location.reload()
         });
 
         document.getElementById("buttonCreateNode").addEventListener("click", function (event) {
