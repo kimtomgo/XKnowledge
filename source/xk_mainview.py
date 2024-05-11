@@ -30,6 +30,15 @@ class XKMainViewAPI(MethodView):
     def post(self):
         form = request.form
         loads_json = JsonFileHandler.loads_json
+
+        need_save_data = form.get('saveData')
+        if need_save_data is not None:
+            data_manager.save_json()
+
+        need_reload_data = form.get('reloadData')
+        if need_reload_data is not None:
+            data_manager.reload()
+
         node_list = form.get('highlightNode')
         if node_list is not None:
             data_manager.highlight_node = loads_json(node_list)
@@ -47,7 +56,6 @@ class XKMainViewAPI(MethodView):
                     "name": ""
                 }
                 data_manager.add_link(new_link)
-            # data_manager.save_json()
 
         create_link = form.get('createEdge')
         if create_link is not None:
