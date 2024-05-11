@@ -44,6 +44,7 @@
 <div style="height:100vh;margin:auto 0">
     <button id="buttonCreateNode" type="button">创建节点</button>
     <button id="buttonCreateEdge" type="button">创建边</button>
+    <button id="buttonDeleteNode" type="button">删除节点</button>
 
     <div id="dialogCreateNode" style="display: none;">
         <form id="createNodeFieldForm" method="post">
@@ -209,6 +210,11 @@
                     dialogCreateNode.style.display = "none";
                     alert("增加节点时不能同时选择两个节点");
                 }
+                if (highlightNodeList.length < 2 && dialogCreateEdge.style.display === "block") {
+                    // 当前已经打开了增加边的输入框，将输入框关闭
+                    dialogCreateEdge.style.display = "none";
+                    alert("增加边时要同时选择两个节点");
+                }
             } else if (event.dataType === "edge") {
                 // todo 点击边的时候做什么操作
                 highlightEdge = event.name;
@@ -224,6 +230,11 @@
                 downplayAll(highlightNodeList);
                 highlightNodeList = [];
                 highlightEdge = undefined;
+                if (dialogCreateEdge.style.display === "block") {
+                    // 当前已经打开了增加边地输入框，将输入框关闭
+                    dialogCreateEdge.style.display = "none";
+                    alert("增加边时要同时选择两个节点");
+                }
             }
         });
 
@@ -274,9 +285,6 @@
                 downplayAll(highlightNodeList);
                 highlightNodeList = [];
                 dialogCreateEdge.style.display = "none";
-                const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-                formData.append("highlightNode", JSON.stringify(highlightNodeList));
-                sendData(formData);
                 alert("增加连接时需要同时选择两个节点");
             }
         });
@@ -287,11 +295,23 @@
             dialogCreateEdge.style.display = "none"; // 当表单提交时，关闭弹窗
 
             const formData = new FormData();
+            formData.append("highlightNode", JSON.stringify(highlightNodeList));
             formData.append("createEdge", JSON.stringify({
                 name: this.elements['nameField'].value,
                 des: this.elements['describeField'].value
             }));
             sendData(formData);
+        });
+
+        document.getElementById("buttonDeleteNode").addEventListener("click", function (event) {
+            downplayAll(highlightNodeList);
+            dialogCreateEdge.style.display = "none";
+            const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+            formData.append("highlightNode", JSON.stringify(highlightNodeList));
+            formData.append("deleteNode", 1);
+            sendData(formData);
+            highlightNodeList = [];
+            window.location.reload()
         });
     </script>
 </div>

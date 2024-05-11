@@ -24,6 +24,7 @@ class XKMainViewAPI(MethodView):
 
     def get(self):
         data_manager.package()
+        print(data_manager.get_json())
         return render_template("xk_mainview.html", json_data=data_manager.get_json())
 
     def post(self):
@@ -46,7 +47,7 @@ class XKMainViewAPI(MethodView):
                     "name": ""
                 }
                 data_manager.add_link(new_link)
-            data_manager.save_json()
+            # data_manager.save_json()
 
         create_link = form.get('createEdge')
         if create_link is not None:
@@ -54,6 +55,11 @@ class XKMainViewAPI(MethodView):
             new_link["source"] = data_manager.highlight_node[0]
             new_link["target"] = data_manager.highlight_node[1]
             data_manager.add_link(new_link)
+
+        delete_node_list = form.get('deleteNode')
+        if delete_node_list is not None:
+            for node_name in data_manager.highlight_node:
+                data_manager.del_node(node_name)
 
         return redirect(url_for("/.XKMainView"))
 
