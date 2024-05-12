@@ -20,6 +20,7 @@ class XKDataManager:
         self.json_data_old = None  # 储存直至上次未保存的json
         self.title = None  # 储存图的标题
         self.highlight_node = []  # 记录高亮节点
+        self.highlight_link = None  # 记录高亮边
         self.history = []  # 记录历史操作
         self.history_sequence_number = -1  # HSN：历史操作对应的目前的位置
 
@@ -98,8 +99,19 @@ class XKDataManager:
         if need_history:
             self.add_history({"deleteNode": delete_json})
 
-    def delete_link(self, name, need_history=True):
-        pass
+    def delete_link(self, source, target, need_history=True):
+        delete_json = []
+        pos = 0
+        length = len(self.json_data["links"])
+        while pos < length:
+            if self.json_data["links"][pos]["source"] == source and self.json_data["links"][pos]["target"] == target:
+                delete_json.append(deepcopy(self.json_data["links"][pos]))
+                del self.json_data["links"][pos]
+                pos -= 1
+                length -= 1
+            pos += 1
+        if need_history:
+            self.add_history({"deleteLink": delete_json})
 
     def add_history(self, operation):
         # 针对多时间线，就会丢弃其余时间线
@@ -127,12 +139,17 @@ class XKDataManager:
                 self.delete_node(current_operation["addNode"]["data"]["name"], need_history=False)
             elif "addLink" in current_operation:
                 # 增加连接的反向是删除连接
-                self.delete_link(current_operation["addLink"]["data"]["name"], need_history=False)
+                self.delete_link(current_operation["addLink"]["source"],
+                                 current_operation["addLink"]["target"], need_history=False)
             elif "deleteNode" in current_operation:
                 # 删除的节点是增加节点，并且把当时删除的连接增加回去
                 # 一个被删除的节点可能会有多个连接
                 self.add_node(current_operation["deleteNode"]["data"], need_history=False)
                 for link in current_operation["deleteNode"]["links"]:
+                    self.add_link(link, need_history=False)
+            elif "deleteLink" in current_operation:
+                # 两个节点之间可以有多条边
+                for link in current_operation["deleteLink"]:
                     self.add_link(link, need_history=False)
 
     def redo(self):
@@ -148,6 +165,9 @@ class XKDataManager:
                 self.add_link(current_operation["addLink"], need_history=False)
             elif "deleteNode" in current_operation:
                 self.delete_node(current_operation["deleteNode"]["data"]["name"], need_history=False)
+            elif "deleteLink" in current_operation:
+                self.delete_link(current_operation["deleteLink"][0]["source"],
+                                 current_operation["deleteLink"][0]["target"], need_history=False)
 
 
 global_data_manager = XKDataManager()
