@@ -1,6 +1,5 @@
 import os
 from copy import deepcopy
-from typing import Union
 
 from source.storage.xk_json import JsonFileHandler
 
@@ -12,15 +11,30 @@ from source.storage.xk_json import JsonFileHandler
 class XKDataManager:
     """ 在内存中做数据管理，调用底层的handler """
 
-    def __init__(self, file_path: Union[str, os.PathLike], title: str):
+    def __init__(self):
         self.json_handler = None  # 保留一个json处理器
-        self.file_path = file_path  # json对应的文件路径
+        # todo root_folder未来可以做成参数可修改的形式
+        self.root_folder = os.path.abspath("../data")  # 软件对应的根文件夹
+        self.file_path = None  # json对应的文件路径
         self.json_data = None  # 储存在内存中的json数据
         self.json_data_old = None  # 储存直至上次未保存的json
-        self.title = title  # 储存图的标题
+        self.title = None  # 储存图的标题
         self.highlight_node = []  # 记录高亮节点
         self.history = []  # 记录历史操作
         self.history_sequence_number = -1  # HSN：历史操作对应的目前的位置
+
+    def set_root_folder(self, folder_path):
+        self.root_folder = os.path.abspath(folder_path)
+
+    def set_title(self, file_name: str):
+        self.title = file_name
+
+    def open_file(self):
+        # 重新打开一个新的文件
+        self.highlight_node = []
+        self.history = []
+        self.history_sequence_number = -1
+        self.file_path = os.path.abspath(os.path.join(self.root_folder, self.title))
         if not os.path.exists(self.file_path):
             raise FileNotFoundError
         else:
@@ -134,3 +148,6 @@ class XKDataManager:
                 self.add_link(current_operation["addLink"], need_history=False)
             elif "deleteNode" in current_operation:
                 self.delete_node(current_operation["deleteNode"]["data"]["name"], need_history=False)
+
+
+global_data_manager = XKDataManager()
