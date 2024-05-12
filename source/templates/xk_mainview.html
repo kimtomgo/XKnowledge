@@ -4,28 +4,40 @@
     <script src="static/echarts.js"></script>
     <script src="static/jquery.js"></script>
     <script>
-        function highlight(name) {
-            // 高亮节点
+        function highlight(dataIndex, dataType) {
+            // 高亮，根据数据类型和位置来高亮
             myChart.dispatchAction({
                 type: "highlight",
                 seriesIndex: 0,
+                dataType: dataType,
+                dataIndex: dataIndex
+            });
+        }
+
+        function downplayByName(name) {
+            // 解除节点高亮，有时节点无法知道自己的index
+            myChart.dispatchAction({
+                type: "downplay",
+                seriesIndex: 0,
+                dataType: "node",
                 name: name
             });
         }
 
-        function downplay(name) {
-            // 解除节点高亮
+        function downplay(dataIndex, dataType) {
+            // 解除高亮，根据数据类型和位置来解除
             myChart.dispatchAction({
                 type: "downplay",
                 seriesIndex: 0,
-                name: name
+                dataType: dataType,
+                dataIndex: dataIndex
             });
         }
 
         function downplayAll(highlightNodeList) {
             // 解除全部节点的高亮
             for (let i = 0; i < highlightNodeList.length; i++) {
-                downplay(highlightNodeList[i]);
+                downplayByName(highlightNodeList[i]);
             }
         }
 
@@ -47,6 +59,7 @@
         <button id="buttonCreateNode" type="button">创建节点</button>
         <button id="buttonCreateEdge" type="button">创建边</button>
         <button id="buttonDeleteNode" type="button">删除节点</button>
+        <button id="buttonDeleteEdge" type="button">删除边</button>
         <button id="buttonUndo" type="button">撤销</button>
         <button id="buttonRedo" type="button">重做</button>
 
@@ -165,6 +178,10 @@
                                 borderColor: "#000",
                                 borderWidth: 2,
                                 borderType: "solid"
+                            },
+                            lineStyle: {
+                                color: "#000",
+                                width: 5,
                             }
                         },
                         // 数据
@@ -189,21 +206,21 @@
                         if (pos !== -1 && highlightNodeList.length !== 0) {
                             // 当重复点击节点的时候，将节点高亮去掉，并且更新highlightNodeList
                             if (highlightNodeList.length === 1) {
-                                downplay(highlightNodeList[0]);
+                                downplay(event.dataIndex, event.dataType);
                                 highlightNodeList = [];
                             } else {
-                                downplay(highlightNodeList[pos]);
+                                downplay(event.dataIndex, event.dataType);
                                 highlightNodeList = [highlightNodeList[(pos + 1) % 2]];// 取pos对应的另一个节点
                             }
                         } else {
                             if (highlightNodeList.length < 2) {
                                 // 点击第一个节点时，高亮点击的那个节点，点击第二个节点时，高亮新点击的节点
                                 highlightNodeList[highlightNodeList.length] = event.name;
-                                highlight(event.name);
+                                highlight(event.dataIndex, event.dataType);
                             } else {
                                 // 点击第三个节点时，将第一个节点高亮取消，并把第二个节点放到第一个位置上，为了后面的有向链接做准备
-                                downplay(highlightNodeList[0]);
-                                highlight(event.name);
+                                downplayByName(highlightNodeList[0]);
+                                highlight(event.dataIndex, event.dataType);
                                 highlightNodeList[0] = highlightNodeList[1];
                                 highlightNodeList[1] = event.name;
 
@@ -221,9 +238,15 @@
                             alert("增加边时要同时选择两个节点");
                         }
                     } else if (event.dataType === "edge") {
-                        // todo 点击边的时候做什么操作
-                        highlightEdge = event.name;
-                        highlight(highlightEdge);
+                        if (highlightEdge === undefined) {
+                            // 如果边没有初始化，就初始化
+                            highlightEdge = {data: event.data, dataIndex: event.dataIndex};
+                        } else {
+                            // 如果边初始化了，就将旧的边解除高亮
+                            downplay(highlightEdge.dataIndex, "edge")
+                            highlightEdge = {data: event.data, dataIndex: event.dataIndex};
+                        }
+                        highlight(event.dataIndex, event.dataType);
                     }
                 });
 
@@ -233,6 +256,7 @@
                         console.log(highlightNodeList.length);
                         // 点击在了空白处，解除所有节点的高亮
                         downplayAll(highlightNodeList);
+                        downplay(highlightEdge.dataIndex, "edge");
                         highlightNodeList = [];
                         highlightEdge = undefined;
                         if (dialogCreateEdge.style.display === "block") {
@@ -329,6 +353,16 @@
                     formData.append("deleteNode", 1);
                     sendData(formData);
                     highlightNodeList = [];
+                    window.location.reload()
+                });
+
+                document.getElementById("buttonDeleteEdge").addEventListener("click", function (event) {
+                    downplay(highlightEdge.dataIndex, "edge");
+                    const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+                    formData.append("highlightLink", JSON.stringify(highlightEdge));
+                    formData.append("deleteLink", 1);
+                    sendData(formData);
+                    highlightEdge = undefined;
                     window.location.reload()
                 });
 

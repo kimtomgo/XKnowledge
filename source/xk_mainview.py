@@ -38,6 +38,11 @@ class XKMainViewAPI(MethodView):
             global_data_manager.highlight_node = loads_json(node_list)
             print(global_data_manager.highlight_node)
 
+        link = form.get('highlightLink')
+        if link is not None:
+            global_data_manager.highlight_link = loads_json(link)
+            print(global_data_manager.highlight_link)
+
         create_node = form.get('createNode')
         if create_node is not None:
             new_node = loads_json(create_node)
@@ -60,6 +65,12 @@ class XKMainViewAPI(MethodView):
         if delete_node_list is not None:
             for node_name in global_data_manager.highlight_node:
                 global_data_manager.delete_node(node_name)
+
+        delete_node_list = form.get('deleteLink')
+        if delete_node_list is not None:
+            source = global_data_manager.highlight_link["data"]["source"]
+            target = global_data_manager.highlight_link["data"]["target"]
+            global_data_manager.delete_link(source, target)
 
         undo = form.get('undo')
         if undo is not None:
