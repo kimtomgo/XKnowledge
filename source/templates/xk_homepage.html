@@ -1,0 +1,59 @@
+{% extends "xk_base.html" %}
+
+{% block head %}
+    <style>
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 200px;
+            border: 1px solid #ddd;
+        }
+
+        .file-list li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            background-color: #f9f9f9;
+            cursor: pointer;
+        }
+
+        .file-list li:hover {
+            background-color: #efefef;
+        }
+
+        .file-list li:last-child {
+            border-bottom: none;
+        }
+    </style>
+    <script type="text/javascript">
+        function onListItemClick(file_name) {
+            const formData = new FormData();
+            formData.append("file_name", JSON.stringify(file_name));
+            fetch("{{ url_for("XKnowledge.XKHomePageView") }}", {
+                method: "POST",
+                body: formData // 将FormData对象作为请求体发送
+            });
+            // 跳转到指定的 URL 地址
+            location.assign("{{ url_for('XKnowledge.XKMainView') }}");
+        }
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div>
+        <h2>
+            请选择一个文件打开：
+        </h2>
+        <div>
+            {% for file in files %}
+                <button type="button" onclick="onListItemClick('{{ file }}')">{{ file }}</button>
+            {% endfor %}
+            {#            <ul class="file-list">#}
+            {#                {% for file in files %}#}
+            {#                    <li onclick="onListItemClick('{{ file }}')">{{ file }}</li>#}
+            {#                {% endfor %}#}
+            {#            </ul>#}
+        </div>
+    </div>
+
+{% endblock %}
