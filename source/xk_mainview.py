@@ -25,12 +25,10 @@ class XKMainViewAPI(MethodView):
         form = request.form
         loads_json = JsonFileHandler.loads_json
 
-        need_save_data = form.get('saveData')
-        if need_save_data is not None:
+        if form.get('saveData') is not None:
             global_data_manager.save_json()
 
-        need_reload_data = form.get('reloadData')
-        if need_reload_data is not None:
+        if form.get('reloadData') is not None:
             global_data_manager.reload()
 
         node_list = form.get('highlightNode')
@@ -61,23 +59,19 @@ class XKMainViewAPI(MethodView):
             new_link["target"] = global_data_manager.highlight_node[1]
             global_data_manager.add_link(new_link)
 
-        delete_node_list = form.get('deleteNode')
-        if delete_node_list is not None:
+        if form.get('deleteNode') is not None:
             for node_name in global_data_manager.highlight_node:
                 global_data_manager.delete_node(node_name)
 
-        delete_node_list = form.get('deleteLink')
-        if delete_node_list is not None:
+        if form.get('deleteLink') is not None:
             source = global_data_manager.highlight_link["data"]["source"]
             target = global_data_manager.highlight_link["data"]["target"]
             global_data_manager.delete_link(source, target)
 
-        undo = form.get('undo')
-        if undo is not None:
+        if form.get('undo') is not None:
             global_data_manager.undo()
 
-        redo = form.get('redo')
-        if redo is not None:
+        if form.get('redo') is not None:
             global_data_manager.redo()
 
         return redirect(url_for("XKnowledge.XKMainView"))

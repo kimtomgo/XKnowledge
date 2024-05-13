@@ -18,31 +18,52 @@ class XKDataManager:
         self.file_path = None  # json对应的文件路径
         self.json_data = None  # 储存在内存中的json数据
         self.json_data_old = None  # 储存直至上次未保存的json
+        self.file_name = None  # 储存图的文件名称
         self.title = None  # 储存图的标题
         self.highlight_node = []  # 记录高亮节点
         self.highlight_link = None  # 记录高亮边
         self.history = []  # 记录历史操作
         self.history_sequence_number = -1  # HSN：历史操作对应的目前的位置
 
+    def reset(self):
+        self.highlight_node = []
+        self.highlight_link = None
+        self.history = []
+        self.history_sequence_number = -1
+
     def set_root_folder(self, folder_path):
         self.root_folder = os.path.abspath(folder_path)
 
-    def set_title(self, file_name: str):
-        self.title = file_name
+    def set_file_name(self, file_name: str):
+        self.file_name = file_name
+        self.title = file_name[:-5]
 
     def open_file(self):
         # 重新打开一个新的文件
-        self.highlight_node = []
-        self.history = []
-        self.history_sequence_number = -1
-        self.file_path = os.path.abspath(os.path.join(self.root_folder, self.title))
-        if not os.path.exists(self.file_path):
-            raise FileNotFoundError
-        else:
+        self.reset()
+        self.file_path = os.path.abspath(os.path.join(self.root_folder, self.file_name))
+        if os.path.isfile(self.file_path):
             self.json_handler = JsonFileHandler(self.file_path)
             self.json_data = self.json_handler.reader()
             # 为重做做准备
             self.json_data_old = deepcopy(self.json_data)
+        else:
+            raise FileNotFoundError
+
+    def create_file(self):
+        # 新建一个文件
+        self.reset()
+        self.file_path = os.path.abspath(os.path.join(self.root_folder, self.file_name))
+        self.json_handler = JsonFileHandler(self.file_path)
+        self.json_data = {"data": [{
+            "name": "中心主题",
+            "des": "",
+            "symbolSize": 70,
+            "category": "类型1"
+        }], "links": []}
+        self.package()
+        self.json_data_old = deepcopy(self.json_data)
+        self.json_handler.writer(self.json_data)
 
     def package(self):
         if self.json_handler is not None:
@@ -51,8 +72,7 @@ class XKDataManager:
     def reload(self):
         # 不保存的还原
         self.json_data = deepcopy(self.json_data_old)
-        self.history = []  # 记录历史操作
-        self.history_sequence_number = -1  # 历史操作对应的目前的位置
+        self.reset()
 
     def get_json(self):
         return self.json_data

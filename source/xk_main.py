@@ -1,29 +1,29 @@
-from flask import Flask, Blueprint, redirect, url_for
+from flask import Flask, Blueprint, send_from_directory
+from flask.views import MethodView
 
+from storage.xk_datamanager import global_data_manager
 from xk_homepage import XKHomePageViewAPI
 from xk_mainview import XKMainViewAPI
 
 
-class XKBlueprint:
-    @staticmethod
-    def creator_blueprint():
-        blueprint = Blueprint("XKnowledge", __name__, url_prefix="/", static_folder="static",
-                              template_folder="templates")
-        blueprint.add_url_rule("XKHomePageView", view_func=XKHomePageViewAPI.as_view("XKHomePageView"))
-        blueprint.add_url_rule("XKMainView", view_func=XKMainViewAPI.as_view("XKMainView"))
-        return blueprint
+class XKExportFileViewAPI(MethodView):
+
+    def get(self):
+        return send_from_directory(global_data_manager.root_folder, global_data_manager.file_name,
+                                   as_attachment=True)
 
 
 if __name__ == "__main__":
     """软件入口"""
     app = Flask(__name__, static_folder="static", template_folder="templates")
-    app.register_blueprint(XKBlueprint.creator_blueprint())  # 在app中注册蓝图
 
+    blueprint = Blueprint("XKnowledge", __name__, url_prefix="/", static_folder="static",
+                          template_folder="templates")
+    blueprint.add_url_rule("/", view_func=XKHomePageViewAPI.as_view("XKHomePageView"))
+    blueprint.add_url_rule("XKMainView", view_func=XKMainViewAPI.as_view("XKMainView"))
+    blueprint.add_url_rule("XKExportFile", view_func=XKExportFileViewAPI.as_view("XKExportFile"))
 
-    @app.route("/")
-    def index():
-        return redirect(url_for("XKnowledge.XKHomePageView"))
-
+    app.register_blueprint(blueprint)  # 在app中注册蓝图
 
     print(app.url_map)
     app.run(debug=True)  # 以debug模式运行应用
