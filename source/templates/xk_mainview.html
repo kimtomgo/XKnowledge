@@ -62,13 +62,14 @@
         <button id="buttonDeleteEdge" type="button">删除边</button>
         <button id="buttonUndo" type="button">撤销</button>
         <button id="buttonRedo" type="button">重做</button>
+        <button id="buttonExportFile" onclick="download()" type="button">导出文件</button>
 
         <div id="dialogCreateNode" style="display: none;">
             <form id="createNodeFieldForm" method="post">
-                <label for="nameField">名称:</label>
-                <input type="text" id="nameField"/>
-                <label for="describeField">描述:</label>
-                <input type="text" id="describeField"/>
+                <label for="nodeNameField">名称:</label>
+                <input type="text" id="nodeNameField"/>
+                <label for="edgeDescribeField">描述:</label>
+                <input type="text" id="edgeDescribeField"/>
                 <label for="categoryField">所属类目:</label>
                 <input type="text" id="categoryField"/>
                 <button type="submit">创建</button>
@@ -77,10 +78,10 @@
 
         <div id="dialogCreateEdge" style="display: none;">
             <form id="createEdgeFieldForm" method="post">
-                <label for="nameField">名称:</label>
-                <input type="text" id="nameField"/>
-                <label for="describeField">描述:</label>
-                <input type="text" id="describeField"/>
+                <label for="edgeNameField">名称:</label>
+                <input type="text" id="edgeNameField"/>
+                <label for="edgeDescribeField">描述:</label>
+                <input type="text" id="edgeDescribeField"/>
                 <button type="submit">创建</button>
             </form>
         </div>
@@ -256,7 +257,9 @@
                         console.log(highlightNodeList.length);
                         // 点击在了空白处，解除所有节点的高亮
                         downplayAll(highlightNodeList);
-                        downplay(highlightEdge.dataIndex, "edge");
+                        if (highlightEdge !== undefined) {
+                            downplay(highlightEdge.dataIndex, "edge");
+                        }
                         highlightNodeList = [];
                         highlightEdge = undefined;
                         if (dialogCreateEdge.style.display === "block") {
@@ -281,6 +284,7 @@
                 });
 
                 document.getElementById("buttonCreateNode").addEventListener("click", function (event) {
+                    dialogCreateEdge.style.display = "none";
                     if (highlightNodeList.length === 2) {
                         // 点击创建节点的时候，发现高亮了两个节点，就将全部高亮节点取消
                         downplayAll(highlightNodeList);
@@ -288,7 +292,11 @@
                         dialogCreateNode.style.display = "none";
                         alert("增加节点时不能同时选择两个节点");
                     } else {
-                        dialogCreateNode.style.display = "block";
+                        if (dialogCreateNode.style.display === "none") {
+                            dialogCreateNode.style.display = "block";
+                        } else {
+                            dialogCreateNode.style.display = "none";
+                        }
                     }
                 });
 
@@ -303,15 +311,15 @@
                         alert("增加节点时不能同时选择两个节点");
                     } else {
                         // 创建节点的时候先检测所有的节点名称，是否重名
-                        if (nodeNames.indexOf(this.elements['nameField'].value) !== -1) {
+                        if (nodeNames.indexOf(this.elements['nodeNameField'].value) !== -1) {
                             alert("不能创建同名节点，请修改节点名称");
                         } else {
                             // 不重名的情况下发送数据到后端
                             const formData = new FormData();
                             formData.append("highlightNode", JSON.stringify(highlightNodeList));
                             formData.append("createNode", JSON.stringify({
-                                name: this.elements['nameField'].value,
-                                des: this.elements['describeField'].value,
+                                name: this.elements['nodeNameField'].value,
+                                des: this.elements['edgeDescribeField'].value,
                                 symbolSize: 50,
                                 category: this.elements['categoryField'].value
                             }));
@@ -321,8 +329,13 @@
                 });
 
                 document.getElementById("buttonCreateEdge").addEventListener("click", function (event) {
+                    dialogCreateNode.style.display = "none";
                     if (highlightNodeList.length === 2) {
-                        dialogCreateEdge.style.display = "block";
+                        if (dialogCreateEdge.style.display === "none") {
+                            dialogCreateEdge.style.display = "block";
+                        } else {
+                            dialogCreateEdge.style.display = "none";
+                        }
                     } else {
                         downplayAll(highlightNodeList);
                         highlightNodeList = [];
@@ -339,8 +352,8 @@
                     const formData = new FormData();
                     formData.append("highlightNode", JSON.stringify(highlightNodeList));
                     formData.append("createEdge", JSON.stringify({
-                        name: this.elements['nameField'].value,
-                        des: this.elements['describeField'].value
+                        name: this.elements['edgeNameField'].value,
+                        des: this.elements['edgeDescribeField'].value
                     }));
                     sendData(formData);
                 });
@@ -357,12 +370,14 @@
                 });
 
                 document.getElementById("buttonDeleteEdge").addEventListener("click", function (event) {
-                    downplay(highlightEdge.dataIndex, "edge");
-                    const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-                    formData.append("highlightLink", JSON.stringify(highlightEdge));
-                    formData.append("deleteLink", 1);
-                    sendData(formData);
-                    highlightEdge = undefined;
+                    if (highlightEdge !== undefined) {
+                        downplay(highlightEdge.dataIndex, "edge");
+                        const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+                        formData.append("highlightLink", JSON.stringify(highlightEdge));
+                        formData.append("deleteLink", 1);
+                        sendData(formData);
+                        highlightEdge = undefined;
+                    }
                     window.location.reload()
                 });
 
@@ -379,6 +394,10 @@
                     sendData(formData);
                     window.location.reload()
                 });
+
+                function download() {
+                    window.location.href = '{{ url_for('XKnowledge.XKExportFile') }}';
+                }
             } else {
                 window.location.reload()
             }
