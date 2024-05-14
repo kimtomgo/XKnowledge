@@ -65,6 +65,20 @@ class XKDataManager:
         self.json_data_old = deepcopy(self.json_data)
         self.json_handler.writer(self.json_data)
 
+    def delete_file(self):
+        # 删除一个文件
+        # 删除文件
+        self.file_path = os.path.abspath(os.path.join(self.root_folder, self.file_name))
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
+            self.reset()
+            self.file_path = None
+            self.json_handler = None
+            self.json_data = None
+            self.json_data_old = None
+        else:
+            raise FileNotFoundError
+
     def package(self):
         if self.json_handler is not None:
             self.json_data = self.json_handler.package_json(self.json_data, self.title)
