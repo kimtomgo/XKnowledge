@@ -25,20 +25,20 @@
             border-bottom: none;
         }
 
-    table {
-        border-collapse: collapse;
-        width: 100%;
-    }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
 
-    th, td {
-        border: 1px solid #dddddd;
-        text-align: left;
-        padding: 8px;
-    }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
 
-    th {
-        background-color: #f2f2f2;
-    }
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 {% endblock %}
 
@@ -77,13 +77,13 @@
                         <td>操作</td>
                     </tr>
                     {% for file in files %}
-                    <tr>
-                        <td>{{ file }}</td>
-                        <td>
-                            <button onclick="onListItemClick('{{ file }}')">打开</button>
-                            <button onclick="deleteFileByName('{{ file }}')">删除</button>
-                        </td>
-                    </tr>
+                        <tr>
+                            <td>{{ file }}</td>
+                            <td>
+                                <button onclick="onListItemClick('{{ file }}')">打开</button>
+                                <button onclick="deleteFileByName('{{ file }}')">删除</button>
+                            </td>
+                        </tr>
                     {% endfor %}
                 </table>
             </div>
@@ -91,11 +91,15 @@
     </div>
 
     <script type="text/javascript">
-        function sendData(formData) {
+        function sendData(formData, operation) {
             // 发送数据到后端
             fetch("{{ url_for("XKnowledge.XKHomePageView") }}", {
                 method: "POST",
                 body: formData // 将FormData对象作为请求体发送
+            }).then(response => {
+                if (response.ok) {
+                    operation();
+                }
             });
         }
 
@@ -103,18 +107,20 @@
             const formData = new FormData();
             formData.append("operationType", "openFile");
             formData.append("fileName", JSON.stringify(file_name));
-            sendData(formData)
-            // 跳转到指定的 URL 地址
-            location.assign("{{ url_for('XKnowledge.XKMainView') }}");
+            sendData(formData, () => {
+                // 跳转到指定的 URL 地址
+                location.assign("{{ url_for('XKnowledge.XKMainView') }}");
+            });
         }
 
         function deleteFileByName(file_name) {
             const formData = new FormData();
             formData.append("operationType", "deleteFile");
             formData.append("fileName", JSON.stringify(file_name));
-            sendData(formData)
-            // 刷新当前页面
-            location.reload();
+            sendData(formData, () => {
+                // 刷新当前页面
+                location.reload();
+            })
         }
 
         const dialogCreateFile = document.getElementById("dialogCreateFile");
@@ -137,8 +143,9 @@
             const formData = new FormData();
             formData.append("operationType", "createFile");
             formData.append("fileName", JSON.stringify(this.elements['fileNameField'].value));
-            sendData(formData);
-            location.assign("{{ url_for('XKnowledge.XKMainView') }}");
+            sendData(formData, () => {
+                location.assign("{{ url_for('XKnowledge.XKMainView') }}");
+            });
         });
 
         document.getElementById("buttonImportFile").addEventListener("click", function (event) {
@@ -150,6 +157,6 @@
             }
         });
 
-</script>
+    </script>
 
 {% endblock %}

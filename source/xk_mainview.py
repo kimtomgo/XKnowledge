@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, jsonify
 from flask.views import MethodView
 from wtforms import Form, StringField, IntegerField
 from wtforms.validators import length
@@ -27,6 +27,7 @@ class XKMainViewAPI(MethodView):
 
         if form.get('saveData') is not None:
             global_data_manager.save_json()
+            return redirect(url_for("XKnowledge.XKMainView"))
 
         if form.get('reloadData') is not None:
             global_data_manager.reload()
@@ -74,4 +75,5 @@ class XKMainViewAPI(MethodView):
         if form.get('redo') is not None:
             global_data_manager.redo()
 
-        return redirect(url_for("XKnowledge.XKMainView"))
+        global_data_manager.package()
+        return jsonify(global_data_manager.get_json())
