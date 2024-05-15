@@ -41,12 +41,123 @@
             }
         }
 
-        function sendData(formData) {
+        function sendData(formData, chart) {
             // 发送数据到后端
-            fetch("{{ url_for("XKnowledge.XKMainView") }}", {
-                method: "POST",
-                body: formData // 将FormData对象作为请求体发送
-            });
+            if (chart === undefined) {
+                fetch("{{ url_for("XKnowledge.XKMainView") }}", {
+                    method: "POST",
+                    body: formData // 将FormData对象作为请求体发送
+                });
+            } else {
+                fetch("{{ url_for("XKnowledge.XKMainView") }}", {
+                    method: "POST",
+                    body: formData // 将FormData对象作为请求体发送
+                }).then(response => {
+                    return response.json();
+                }).then(data => {
+                    chart.setOption(createOption(data));
+                });
+            }
+        }
+
+        function createOption(jsonData) {
+            option = {
+                // 图的标题
+                title: {
+                    text: jsonData.title
+                },
+                // 提示框的配置
+                tooltip: {
+                    formatter: function (x) {
+                        return x.data.des;
+                    }
+                },
+                // 工具箱
+                toolbox: {
+                    // 显示工具箱
+                    show: true,
+                    feature: {
+                        mark: {
+                            show: true
+                        },
+                        // 还原
+                        restore: {
+                            show: true
+                        },
+                        // 保存为图片
+                        saveAsImage: {
+                            show: true
+                        }
+                    }
+                },
+                legend: [{
+                    // selectedMode: "single",
+                    data: jsonData.categories.map(function (a) {
+                        return a.name;
+                    })
+                }],
+                series: [{
+                    type: "graph", // 类型:关系图
+                    layout: "force", //图的布局，类型为力导图
+                    //symbolSize: 40, // 调整节点的大小
+                    roam: true, // 是否开启鼠标缩放和平移漫游。默认不开启。如果只想要开启缩放或者平移,可以设置成 "scale" 或者 "move"。设置成 true 为都开启
+                    // edgeSymbol: ["circle", "arrow"],
+                    //edgeSymbolSize: [2, 10],
+                    //edgeLabel: {
+                    //    normal: {
+                    //        textStyle: {
+                    //            fontSize: 20
+                    //        }
+                    //    }
+                    //},
+                    force: {
+                        repulsion: 2500,
+                        edgeLength: [10, 50]
+                    },
+                    draggable: true, // 元素是否可以被拖动
+                    // 边的风格
+                    lineStyle: {
+                        normal: {
+                            width: 2,
+                            color: "#4b565b",
+                        }
+                    },
+                    // 边上显示当前边的名称
+                    edgeLabel: {
+                        normal: {
+                            show: true,
+                            formatter: function (x) {
+                                return x.data.name;
+                            }
+                        }
+                    },
+                    // 节点上显示当前节点名称
+                    label: {
+                        normal: {
+                            show: true,
+                            textStyle: {}
+                        }
+                    },
+                    // 高亮时节点外层增加黑色边缘
+                    emphasis: {
+                        disable: true,
+                        itemStyle: {
+                            borderColor: "#000",
+                            borderWidth: 2,
+                            borderType: "solid"
+                        },
+                        lineStyle: {
+                            color: "#000",
+                            width: 5,
+                        }
+                    },
+                    // 数据
+                    data: jsonData.data,
+                    links: jsonData.links,
+                    categories: jsonData.categories,
+                }]
+            };
+            return option;
         }
     </script>
 {% endblock %}
@@ -91,315 +202,225 @@
             const myChart = echarts.init(document.getElementById("main"));
             myChart.showLoading(); // 加载等待
             let jsonData = {{ json_data | tojson }};
-            if (jsonData) {
-                let nodeNames = jsonData.data.map(function (node) {
-                    return node.name;
-                }) // 记录所有的节点名称，当增加节点的时候判断是否重名
-                option = {
-                    // 图的标题
-                    title: {
-                        text: jsonData.title
-                    },
-                    // 提示框的配置
-                    tooltip: {
-                        formatter: function (x) {
-                            return x.data.des;
-                        }
-                    },
-                    // 工具箱
-                    toolbox: {
-                        // 显示工具箱
-                        show: true,
-                        feature: {
-                            mark: {
-                                show: true
-                            },
-                            // 还原
-                            restore: {
-                                show: true
-                            },
-                            // 保存为图片
-                            saveAsImage: {
-                                show: true
-                            }
-                        }
-                    },
-                    legend: [{
-                        // selectedMode: "single",
-                        data: jsonData.categories.map(function (a) {
-                            return a.name;
-                        })
-                    }],
-                    series: [{
-                        type: "graph", // 类型:关系图
-                        layout: "force", //图的布局，类型为力导图
-                        //symbolSize: 40, // 调整节点的大小
-                        roam: true, // 是否开启鼠标缩放和平移漫游。默认不开启。如果只想要开启缩放或者平移,可以设置成 "scale" 或者 "move"。设置成 true 为都开启
-                        // edgeSymbol: ["circle", "arrow"],
-                        //edgeSymbolSize: [2, 10],
-                        //edgeLabel: {
-                        //    normal: {
-                        //        textStyle: {
-                        //            fontSize: 20
-                        //        }
-                        //    }
-                        //},
-                        force: {
-                            repulsion: 2500,
-                            edgeLength: [10, 50]
-                        },
-                        draggable: true, // 元素是否可以被拖动
-                        // 边的风格
-                        lineStyle: {
-                            normal: {
-                                width: 2,
-                                color: "#4b565b",
-                            }
-                        },
-                        // 边上显示当前边的名称
-                        edgeLabel: {
-                            normal: {
-                                show: true,
-                                formatter: function (x) {
-                                    return x.data.name;
-                                }
-                            }
-                        },
-                        // 节点上显示当前节点名称
-                        label: {
-                            normal: {
-                                show: true,
-                                textStyle: {}
-                            }
-                        },
-                        // 高亮时节点外层增加黑色边缘
-                        emphasis: {
-                            disable: true,
-                            itemStyle: {
-                                borderColor: "#000",
-                                borderWidth: 2,
-                                borderType: "solid"
-                            },
-                            lineStyle: {
-                                color: "#000",
-                                width: 5,
-                            }
-                        },
-                        // 数据
-                        data: jsonData.data,
-                        links: jsonData.links,
-                        categories: jsonData.categories,
-                    }]
-                };
-                myChart.hideLoading();// 隐藏加载等待
-                myChart.setOption(option);
 
-                const dialogCreateNode = document.getElementById("dialogCreateNode");
-                const dialogCreateEdge = document.getElementById("dialogCreateEdge");
+            myChart.hideLoading();// 隐藏加载等待
+            myChart.setOption(createOption(jsonData));
 
-                let highlightNodeList = []; // 记录旧的高亮节点
-                let highlightEdge;
+            const dialogCreateNode = document.getElementById("dialogCreateNode");
+            const dialogCreateEdge = document.getElementById("dialogCreateEdge");
 
-                myChart.on("click", function (event) {
-                    console.log(event);
-                    if (event.dataType === "node") {
-                        const pos = highlightNodeList.indexOf(event.name);
-                        if (pos !== -1 && highlightNodeList.length !== 0) {
-                            // 当重复点击节点的时候，将节点高亮去掉，并且更新highlightNodeList
-                            if (highlightNodeList.length === 1) {
-                                downplay(event.dataIndex, event.dataType);
-                                highlightNodeList = [];
-                            } else {
-                                downplay(event.dataIndex, event.dataType);
-                                highlightNodeList = [highlightNodeList[(pos + 1) % 2]];// 取pos对应的另一个节点
-                            }
+            let highlightNodeList = []; // 记录旧的高亮节点
+            let highlightEdge;
+
+            myChart.on("click", function (event) {
+                console.log(event);
+                if (event.dataType === "node") {
+                    const pos = highlightNodeList.indexOf(event.name);
+                    if (pos !== -1 && highlightNodeList.length !== 0) {
+                        // 当重复点击节点的时候，将节点高亮去掉，并且更新highlightNodeList
+                        if (highlightNodeList.length === 1) {
+                            downplay(event.dataIndex, event.dataType);
+                            highlightNodeList = [];
                         } else {
-                            if (highlightNodeList.length < 2) {
-                                // 点击第一个节点时，高亮点击的那个节点，点击第二个节点时，高亮新点击的节点
-                                highlightNodeList[highlightNodeList.length] = event.name;
-                                highlight(event.dataIndex, event.dataType);
-                            } else {
-                                // 点击第三个节点时，将第一个节点高亮取消，并把第二个节点放到第一个位置上，为了后面的有向链接做准备
-                                downplayByName(highlightNodeList[0]);
-                                highlight(event.dataIndex, event.dataType);
-                                highlightNodeList[0] = highlightNodeList[1];
-                                highlightNodeList[1] = event.name;
-
-                            }
-                            console.log(highlightNodeList);
+                            downplay(event.dataIndex, event.dataType);
+                            highlightNodeList = [highlightNodeList[(pos + 1) % 2]];// 取pos对应的另一个节点
                         }
-                        if (highlightNodeList.length === 2 && dialogCreateNode.style.display === "block") {
-                            // 当前已经打开了增加节点的输入框，将输入框关闭
-                            dialogCreateNode.style.display = "none";
-                            alert("增加节点时不能同时选择两个节点");
-                        }
-                        if (highlightNodeList.length < 2 && dialogCreateEdge.style.display === "block") {
-                            // 当前已经打开了增加边的输入框，将输入框关闭
-                            dialogCreateEdge.style.display = "none";
-                            alert("增加边时要同时选择两个节点");
-                        }
-                    } else if (event.dataType === "edge") {
-                        if (highlightEdge === undefined) {
-                            // 如果边没有初始化，就初始化
-                            highlightEdge = {data: event.data, dataIndex: event.dataIndex};
+                    } else {
+                        if (highlightNodeList.length < 2) {
+                            // 点击第一个节点时，高亮点击的那个节点，点击第二个节点时，高亮新点击的节点
+                            highlightNodeList[highlightNodeList.length] = event.name;
+                            highlight(event.dataIndex, event.dataType);
                         } else {
-                            // 如果边初始化了，就将旧的边解除高亮
-                            downplay(highlightEdge.dataIndex, "edge")
-                            highlightEdge = {data: event.data, dataIndex: event.dataIndex};
+                            // 点击第三个节点时，将第一个节点高亮取消，并把第二个节点放到第一个位置上，为了后面的有向链接做准备
+                            downplayByName(highlightNodeList[0]);
+                            highlight(event.dataIndex, event.dataType);
+                            highlightNodeList[0] = highlightNodeList[1];
+                            highlightNodeList[1] = event.name;
+
                         }
-                        highlight(event.dataIndex, event.dataType);
+                        console.log(highlightNodeList);
                     }
-                });
-
-                myChart.getZr().on("click", function (event) {
-                    // 没有 target 意味着鼠标/指针不在任何一个图形元素上，它是从“空白处”触发的。
-                    if (!event.target) {
-                        console.log(highlightNodeList.length);
-                        // 点击在了空白处，解除所有节点的高亮
-                        downplayAll(highlightNodeList);
-                        if (highlightEdge !== undefined) {
-                            downplay(highlightEdge.dataIndex, "edge");
-                        }
-                        highlightNodeList = [];
-                        highlightEdge = undefined;
-                        if (dialogCreateEdge.style.display === "block") {
-                            // 当前已经打开了增加边地输入框，将输入框关闭
-                            dialogCreateEdge.style.display = "none";
-                            alert("增加边时要同时选择两个节点");
-                        }
-                    }
-                });
-
-                document.getElementById("buttonSaveData").addEventListener("click", function (event) {
-                    const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-                    formData.append("saveData", 1);
-                    sendData(formData);
-                });
-
-                document.getElementById("buttonReloadData").addEventListener("click", function (event) {
-                    const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-                    formData.append("reloadData", 1);
-                    sendData(formData);
-                    window.location.reload()
-                });
-
-                document.getElementById("buttonCreateNode").addEventListener("click", function (event) {
-                    dialogCreateEdge.style.display = "none";
-                    if (highlightNodeList.length === 2) {
-                        // 点击创建节点的时候，发现高亮了两个节点，就将全部高亮节点取消
-                        downplayAll(highlightNodeList);
-                        highlightNodeList = [];
+                    if (highlightNodeList.length === 2 && dialogCreateNode.style.display === "block") {
+                        // 当前已经打开了增加节点的输入框，将输入框关闭
                         dialogCreateNode.style.display = "none";
                         alert("增加节点时不能同时选择两个节点");
-                    } else {
-                        if (dialogCreateNode.style.display === "none") {
-                            dialogCreateNode.style.display = "block";
-                        } else {
-                            dialogCreateNode.style.display = "none";
-                        }
                     }
-                });
-
-                document.getElementById("createNodeFieldForm").addEventListener("submit", function (event) {
-                    // 获取表单内的所有控件
-                    // event.preventDefault()
-                    dialogCreateNode.style.display = "none"; // 当表单提交时，关闭弹窗
-                    if (highlightNodeList.length === 2) {
-                        // 点击创建节点的时候，发现高亮了两个节点，就将全部高亮节点取消
-                        downplayAll(highlightNodeList);
-                        highlightNodeList = [];
-                        alert("增加节点时不能同时选择两个节点");
-                    } else {
-                        // 创建节点的时候先检测所有的节点名称，是否重名
-                        if (nodeNames.indexOf(this.elements['nodeNameField'].value) !== -1) {
-                            alert("不能创建同名节点，请修改节点名称");
-                        } else {
-                            // 不重名的情况下发送数据到后端
-                            const formData = new FormData();
-                            formData.append("highlightNode", JSON.stringify(highlightNodeList));
-                            formData.append("createNode", JSON.stringify({
-                                name: this.elements['nodeNameField'].value,
-                                des: this.elements['edgeDescribeField'].value,
-                                symbolSize: 50,
-                                category: this.elements['categoryField'].value
-                            }));
-                            sendData(formData);
-                        }
-                    }
-                });
-
-                document.getElementById("buttonCreateEdge").addEventListener("click", function (event) {
-                    dialogCreateNode.style.display = "none";
-                    if (highlightNodeList.length === 2) {
-                        if (dialogCreateEdge.style.display === "none") {
-                            dialogCreateEdge.style.display = "block";
-                        } else {
-                            dialogCreateEdge.style.display = "none";
-                        }
-                    } else {
-                        downplayAll(highlightNodeList);
-                        highlightNodeList = [];
+                    if (highlightNodeList.length < 2 && dialogCreateEdge.style.display === "block") {
+                        // 当前已经打开了增加边的输入框，将输入框关闭
                         dialogCreateEdge.style.display = "none";
-                        alert("增加连接时需要同时选择两个节点");
+                        alert("增加边时要同时选择两个节点");
                     }
-                });
+                } else if (event.dataType === "edge") {
+                    if (highlightEdge === undefined) {
+                        // 如果边没有初始化，就初始化
+                        highlightEdge = {data: event.data, dataIndex: event.dataIndex};
+                    } else {
+                        // 如果边初始化了，就将旧的边解除高亮
+                        downplay(highlightEdge.dataIndex, "edge")
+                        highlightEdge = {data: event.data, dataIndex: event.dataIndex};
+                    }
+                    highlight(event.dataIndex, event.dataType);
+                }
+            });
 
-                document.getElementById("createEdgeFieldForm").addEventListener("submit", function (event) {
-                    // 获取表单内的所有控件
-                    // event.preventDefault()
-                    dialogCreateEdge.style.display = "none"; // 当表单提交时，关闭弹窗
-
-                    const formData = new FormData();
-                    formData.append("highlightNode", JSON.stringify(highlightNodeList));
-                    formData.append("createEdge", JSON.stringify({
-                        name: this.elements['edgeNameField'].value,
-                        des: this.elements['edgeDescribeField'].value
-                    }));
-                    sendData(formData);
-                });
-
-                document.getElementById("buttonDeleteNode").addEventListener("click", function (event) {
+            myChart.getZr().on("click", function (event) {
+                // 没有 target 意味着鼠标/指针不在任何一个图形元素上，它是从“空白处”触发的。
+                if (!event.target) {
+                    console.log(highlightNodeList.length);
+                    // 点击在了空白处，解除所有节点的高亮
                     downplayAll(highlightNodeList);
-                    dialogCreateEdge.style.display = "none";
-                    const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-                    formData.append("highlightNode", JSON.stringify(highlightNodeList));
-                    formData.append("deleteNode", 1);
-                    sendData(formData);
-                    highlightNodeList = [];
-                    window.location.reload()
-                });
-
-                document.getElementById("buttonDeleteEdge").addEventListener("click", function (event) {
                     if (highlightEdge !== undefined) {
                         downplay(highlightEdge.dataIndex, "edge");
-                        const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-                        formData.append("highlightLink", JSON.stringify(highlightEdge));
-                        formData.append("deleteLink", 1);
-                        sendData(formData);
-                        highlightEdge = undefined;
                     }
-                    window.location.reload()
-                });
-
-                document.getElementById("buttonUndo").addEventListener("click", function (event) {
-                    const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-                    formData.append("undo", 1);
-                    sendData(formData);
-                    window.location.reload()
-                });
-
-                document.getElementById("buttonRedo").addEventListener("click", function (event) {
-                    const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
-                    formData.append("redo", 1);
-                    sendData(formData);
-                    window.location.reload()
-                });
-
-                function download() {
-                    window.location.href = '{{ url_for('XKnowledge.XKExportFile') }}';
+                    highlightNodeList = [];
+                    highlightEdge = undefined;
+                    if (dialogCreateEdge.style.display === "block") {
+                        // 当前已经打开了增加边地输入框，将输入框关闭
+                        dialogCreateEdge.style.display = "none";
+                        alert("增加边时要同时选择两个节点");
+                    }
                 }
-            } else {
+            });
+
+            document.getElementById("buttonSaveData").addEventListener("click", function (event) {
+                const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+                formData.append("saveData", 1);
+                sendData(formData, undefined);
+            });
+
+            document.getElementById("buttonReloadData").addEventListener("click", function (event) {
+                const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+                formData.append("reloadData", 1);
+                sendData(formData, myChart);
                 window.location.reload()
+            });
+
+            document.getElementById("buttonCreateNode").addEventListener("click", function (event) {
+                dialogCreateEdge.style.display = "none";
+                if (highlightNodeList.length === 2) {
+                    // 点击创建节点的时候，发现高亮了两个节点，就将全部高亮节点取消
+                    downplayAll(highlightNodeList);
+                    highlightNodeList = [];
+                    dialogCreateNode.style.display = "none";
+                    alert("增加节点时不能同时选择两个节点");
+                } else {
+                    if (dialogCreateNode.style.display === "none") {
+                        dialogCreateNode.style.display = "block";
+                    } else {
+                        dialogCreateNode.style.display = "none";
+                    }
+                }
+            });
+
+            document.getElementById("createNodeFieldForm").addEventListener("submit", function (event) {
+                // 获取表单内的所有控件
+                event.preventDefault()
+                dialogCreateNode.style.display = "none"; // 当表单提交时，关闭弹窗
+                if (highlightNodeList.length === 2) {
+                    // 点击创建节点的时候，发现高亮了两个节点，就将全部高亮节点取消
+                    downplayAll(highlightNodeList);
+                    highlightNodeList = [];
+                    alert("增加节点时不能同时选择两个节点");
+                } else {
+                    // 创建节点的时候先检测所有的节点名称，是否重名
+                    // const option = myChart.getOption();
+                    const nodeNames = myChart.getOption().series[0].data.map(function (node) {
+                        return node.name;
+                    });
+                    if (nodeNames.indexOf(this.elements['nodeNameField'].value) !== -1) {
+                        alert("不能创建同名节点，请修改节点名称");
+                    } else {
+                        // 不重名的情况下发送数据到后端
+                        const formData = new FormData();
+                        formData.append("highlightNode", JSON.stringify(highlightNodeList));
+                        formData.append("createNode", JSON.stringify({
+                            name: this.elements['nodeNameField'].value,
+                            des: this.elements['edgeDescribeField'].value,
+                            symbolSize: 50,
+                            category: this.elements['categoryField'].value
+                        }));
+                        fetch("{{ url_for("XKnowledge.XKMainView") }}", {
+                            method: "POST",
+                            body: formData // 将FormData对象作为请求体发送
+                        }).then(response => {
+                            return response.json();
+                        }).then(data => {
+                            myChart.clear();
+                            myChart.setOption(createOption(data));
+                        });
+                    }
+                }
+            });
+
+            document.getElementById("buttonCreateEdge").addEventListener("click", function (event) {
+                dialogCreateNode.style.display = "none";
+                if (highlightNodeList.length === 2) {
+                    if (dialogCreateEdge.style.display === "none") {
+                        dialogCreateEdge.style.display = "block";
+                    } else {
+                        dialogCreateEdge.style.display = "none";
+                    }
+                } else {
+                    downplayAll(highlightNodeList);
+                    highlightNodeList = [];
+                    dialogCreateEdge.style.display = "none";
+                    alert("增加连接时需要同时选择两个节点");
+                }
+            });
+
+            document.getElementById("createEdgeFieldForm").addEventListener("submit", function (event) {
+                // 获取表单内的所有控件
+                event.preventDefault();
+                dialogCreateEdge.style.display = "none"; // 当表单提交时，关闭弹窗
+
+                const formData = new FormData();
+                formData.append("highlightNode", JSON.stringify(highlightNodeList));
+                formData.append("createEdge", JSON.stringify({
+                    name: this.elements['edgeNameField'].value,
+                    des: this.elements['edgeDescribeField'].value
+                }));
+                sendData(formData, myChart);
+            });
+
+            document.getElementById("buttonDeleteNode").addEventListener("click", function (event) {
+                downplayAll(highlightNodeList);
+                dialogCreateEdge.style.display = "none";
+                const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+                formData.append("highlightNode", JSON.stringify(highlightNodeList));
+                formData.append("deleteNode", 1);
+                sendData(formData, myChart);
+                highlightNodeList = [];
+                // window.location.reload()
+            });
+
+            document.getElementById("buttonDeleteEdge").addEventListener("click", function (event) {
+                if (highlightEdge !== undefined) {
+                    downplay(highlightEdge.dataIndex, "edge");
+                    const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+                    formData.append("highlightLink", JSON.stringify(highlightEdge));
+                    formData.append("deleteLink", 1);
+                    sendData(formData, myChart);
+                    highlightEdge = undefined;
+                }
+                // window.location.reload();
+            });
+
+            document.getElementById("buttonUndo").addEventListener("click", function (event) {
+                const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+                formData.append("undo", 1);
+                sendData(formData, myChart);
+                // window.location.reload()
+            });
+
+            document.getElementById("buttonRedo").addEventListener("click", function (event) {
+                const formData = new FormData(); // 创建一个FormData对象，包含表单中的所有数据
+                formData.append("redo", 1);
+                sendData(formData, myChart);
+                // window.location.reload()
+            });
+
+            function download() {
+                window.location.href = '{{ url_for('XKnowledge.XKExportFile') }}';
             }
         </script>
     </div>

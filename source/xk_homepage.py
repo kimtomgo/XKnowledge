@@ -1,6 +1,6 @@
 import os
 
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, jsonify
 from flask.views import MethodView
 from wtforms import Form, StringField, IntegerField
 from wtforms.validators import length
@@ -50,7 +50,6 @@ class XKHomePageViewAPI(MethodView):
             # 如果是打开文件，文件名就是全名
             global_data_manager.set_file_name(file_name)
             global_data_manager.delete_file()
-            return redirect(url_for("XKnowledge.XKHomePageView"))
 
         if 'file' in request.files:
             file = request.files['file']
@@ -58,6 +57,6 @@ class XKHomePageViewAPI(MethodView):
                 if file:
                     file_path = os.path.join(global_data_manager.root_folder, file.filename)
                     file.save(file_path)
-                    return redirect(url_for("XKnowledge.XKHomePageView"))
+            return redirect(url_for("XKnowledge.XKHomePageView"))
 
-        return redirect(url_for("XKnowledge.XKMainView"))
+        return jsonify("ok")

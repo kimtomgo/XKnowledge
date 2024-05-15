@@ -81,7 +81,10 @@ class XKDataManager:
 
     def package(self):
         if self.json_handler is not None:
-            self.json_data = self.json_handler.package_json(self.json_data, self.title)
+            if self.title is None:
+                raise FileNotFoundError
+            if self.json_data is not None:
+                self.json_data = self.json_handler.package_json(self.json_data, self.title)
 
     def reload(self):
         # 不保存的还原
