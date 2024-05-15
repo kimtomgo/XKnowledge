@@ -9,6 +9,8 @@ from xk_mainview import XKMainViewAPI
 class XKExportFileViewAPI(MethodView):
 
     def get(self):
+        # 导出文件之前先保存文件
+        global_data_manager.save_json()
         return send_from_directory(global_data_manager.root_folder, global_data_manager.file_name,
                                    as_attachment=True)
 
