@@ -24,6 +24,21 @@
         .file-list li:last-child {
             border-bottom: none;
         }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
     </style>
 {% endblock %}
 
@@ -53,17 +68,24 @@
         </div>
         <div>
             <h2>
-                请选择一个文件打开：
+                文件列表：
             </h2>
             <div>
-                {% for file in files %}
-                    <button onclick="onListItemClick('{{ file }}')">{{ file }}</button>
-                {% endfor %}
-                {#            <ul class="file-list">#}
-                {#                {% for file in files %}#}
-                {#                    <li onclick="onListItemClick('{{ file }}')">{{ file }}</li>#}
-                {#                {% endfor %}#}
-                {#            </ul>#}
+                <table>
+                    <tr>
+                        <td>文件名</td>
+                        <td>操作</td>
+                    </tr>
+                    {% for file in files %}
+                    <tr>
+                        <td>{{ file }}</td>
+                        <td>
+                            <button onclick="onListItemClick('{{ file }}')">打开</button>
+                            <button onclick="deleteFileByName('{{ file }}')">删除</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
             </div>
         </div>
     </div>
@@ -79,11 +101,20 @@
 
         function onListItemClick(file_name) {
             const formData = new FormData();
-            formData.append("openFile", 1);
+            formData.append("operationType", "openFile");
             formData.append("fileName", JSON.stringify(file_name));
             sendData(formData)
             // 跳转到指定的 URL 地址
             location.assign("{{ url_for('XKnowledge.XKMainView') }}");
+        }
+
+        function deleteFileByName(file_name) {
+            const formData = new FormData();
+            formData.append("operationType", "deleteFile");
+            formData.append("fileName", JSON.stringify(file_name));
+            sendData(formData)
+            // 刷新当前页面
+            location.reload();
         }
 
         const dialogCreateFile = document.getElementById("dialogCreateFile");
@@ -104,7 +135,7 @@
             dialogCreateFile.style.display = "none"; // 当表单提交时，关闭弹窗
 
             const formData = new FormData();
-            formData.append("createFile", 1);
+            formData.append("operationType", "createFile");
             formData.append("fileName", JSON.stringify(this.elements['fileNameField'].value));
             sendData(formData);
             location.assign("{{ url_for('XKnowledge.XKMainView') }}");
@@ -119,6 +150,6 @@
             }
         });
 
-    </script>
+</script>
 
 {% endblock %}

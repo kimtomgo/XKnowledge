@@ -31,19 +31,26 @@ class XKHomePageViewAPI(MethodView):
         loads_json = JsonFileHandler.loads_json
 
         file_name = form.get('fileName')
+        operation_type = form.get('operationType')
         if file_name is not None:
             # 复用了file_name
             file_name = loads_json(file_name)
 
-        if form.get('openFile') is not None:
+        if operation_type == 'openFile':
             # 如果是打开文件，文件名就是全名
             global_data_manager.set_file_name(file_name)
             global_data_manager.open_file()
 
-        if form.get('createFile') is not None:
+        if operation_type == 'createFile':
             # 如果是创建文件，文件名要加后缀
             global_data_manager.set_file_name("{0}.json".format(file_name))
             global_data_manager.create_file()
+
+        if operation_type == 'deleteFile':
+            # 如果是打开文件，文件名就是全名
+            global_data_manager.set_file_name(file_name)
+            global_data_manager.delete_file()
+            return redirect(url_for("XKnowledge.XKHomePageView"))
 
         if 'file' in request.files:
             file = request.files['file']
