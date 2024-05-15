@@ -58,7 +58,7 @@ class XKDataManager:
         self.json_data = {"data": [{
             "name": "中心主题",
             "des": "",
-            "symbolSize": 70,
+            "symbolSize": 50,
             "category": "类型1"
         }], "links": []}
         self.package()
@@ -161,7 +161,7 @@ class XKDataManager:
         #        ->D1->E1
         # 这个时候会抛弃D和E，变为：
         # A->B->C->D1->E1
-        self.history = self.history[:min(self.history_sequence_number, len(self.history))]
+        self.history = self.history[:min(self.history_sequence_number + 1, len(self.history))]
         self.history_sequence_number += 1
         self.history.append(operation)
 
@@ -192,7 +192,7 @@ class XKDataManager:
     def redo(self):
         # 反撤销操作
         # HSN向时间线正方向移1个，所有操作都是正向操作
-        if self.history_sequence_number < len(self.history):
+        if self.history_sequence_number + 1 < len(self.history):
             self.history_sequence_number += 1
             current_operation = self.history[self.history_sequence_number]
             if "addNode" in current_operation:
